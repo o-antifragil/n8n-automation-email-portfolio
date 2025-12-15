@@ -1,0 +1,516 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX",
+            "UNREAD"
+          ],
+          "q": "is:inbox",
+          "readStatus": "unread",
+          "sender": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        144
+      ],
+      "id": "7a0ff91a-3c4b-4682-ad00-188d5318259e",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jlwNyQgwpffd6ivq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você recebeu um novo email de pedido.\n\nConteúdo do email:\n{{ $json.text }}\n\nDados do remetente:\n- Nome: {{ $json.from.value[0].name }}\n- Email: {{ $json.from.value[0].address }}\n- Assunto: {{ $json.subject }}\n- Gmail Message ID: {{ $json.id }}\n\nTarefas a executar:\n\n1. Extraia os dados do pedido presentes no email.\n2. Registre as informações no Google Sheets nos campos:\n   - nome\n   - email\n   - telefone\n   - endereco\n   - pedido\n   - itens\n   - pagamento\n   - observacoes\n   - status\n\n3. Envie um email de resposta ao cliente com as seguintes características:\n   - Agradeça o contato.\n   - Confirme o recebimento do pedido.\n   - Cite o produto solicitado.\n   - Informe que em breve haverá um retorno com os próximos passos.\n   - Utilize um tom de atendimento humano e profissional.\n\n4. Crie um evento no Google Calendar com as seguintes regras:\n   - Título: \"Retorno pedido - {{ $json.from.value[0].name }}\"\n   - Data: 2 dias após a data atual (pode ajustar conforme contexto do pedido).\n   - Descrição: acompanhamento do pedido {{ $json.subject }}.\n   - Utilize o email do cliente no campo de descrição (não como convidado).\n\n5. Após concluir todas as etapas com sucesso:\n   - Marque o email como lido.\n   - Remova o label \"UNREAD\".\n   - Adicione o label \"CLIENTE_ATENDIDO\".\n",
+        "options": {
+          "systemMessage": "Você é um agente de atendimento ao cliente responsável por processar pedidos recebidos por email.\n\nSeus objetivos são:\n1. Ler e interpretar emails de pedidos enviados por clientes.\n2. Extrair corretamente as informações do pedido e do cliente.\n3. Registrar os dados do pedido no Google Sheets usando a ferramenta disponível.\n4. Redigir e enviar uma resposta automática profissional, cordial e clara ao cliente, com tom de atendimento humano e customer service, confirmando o recebimento do pedido.\n5. Criar um evento no Google Calendar para retorno ou acompanhamento do pedido.\n6. Após concluir todas as ações acima com sucesso:\n   - Marcar o email como lido.\n   - Remover o label \"UNREAD\".\n   - Adicionar o label \"CLIENTE_ATENDIDO\".\n\nDiretrizes de atendimento:\n- Utilize um tom cordial, educado e profissional.\n- Personalize a mensagem utilizando o nome do cliente e o produto solicitado.\n- Informe que o pedido foi recebido e está em processamento.\n- Explique claramente o próximo passo (confirmação, pagamento, envio, etc.).\n- Seja breve, claro e objetivo.\n- Não prometa prazos que não foram fornecidos.\n- Não utilize linguagem robótica ou excessivamente formal.\n\nRegras técnicas:\n- Execute as ações obrigatoriamente nesta ordem:\n  1) Salvar dados no Google Sheets\n  2) Enviar email de resposta ao cliente\n  3) Criar evento no Google Calendar\n  4) Executar ações no Gmail (marcar como lido, labels)\n- Sempre utilize o Gmail Message ID original do email para ações\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        32,
+        144
+      ],
+      "id": "10599d02-9be8-444d-97a3-d0091bca117f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.1",
+          "mode": "list",
+          "cachedResultName": "gpt-5.1"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        528
+      ],
+      "id": "3499850e-606e-4b75-b323-2c41041d2b77",
+      "name": "Modelo de CHATGPT",
+      "credentials": {
+        "openAiApi": {
+          "id": "58OKkHg6CToJ06DM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.threadId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        528
+      ],
+      "id": "2a16ab45-2af8-478a-98df-5bce32cc2868",
+      "name": "MEMORIA"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NSKAKYwVGnFDy_Qs86tkBrhl5H6clyo6mwEtBEdntyk",
+          "mode": "list",
+          "cachedResultName": "Pedidos",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NSKAKYwVGnFDy_Qs86tkBrhl5H6clyo6mwEtBEdntyk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NSKAKYwVGnFDy_Qs86tkBrhl5H6clyo6mwEtBEdntyk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "NOME": "={{ $fromAI(\"NOME\") }}",
+            "TELEFONE": "={{ $fromAI(\"TELEFONE\") }}",
+            "PEDIDO": "={{ $fromAI(\"PEDIDO\") }}",
+            "ITENS": "={{ $fromAI(\"ITENS\") }}",
+            "FORMA DE PAGAMENTO": "={{ $fromAI(\"PAGAMENTO\") }}",
+            "STATUS": "={{ $fromAI(\"STATUS\") }}",
+            "EMAIL": "={{ $fromAI(\"EMAIL\") }}",
+            "ENDERECO": "={{ $fromAI(\"ENDERECO\") }}",
+            "OBSERVACOES": "={{ $fromAI(\"OBSERVACOES\") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "NOME",
+              "displayName": "NOME",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "EMAIL",
+              "displayName": "EMAIL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TELEFONE",
+              "displayName": "TELEFONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ENDERECO",
+              "displayName": "ENDERECO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PEDIDO",
+              "displayName": "PEDIDO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ITENS",
+              "displayName": "ITENS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FORMA DE PAGAMENTO",
+              "displayName": "FORMA DE PAGAMENTO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "OBSERVACOES",
+              "displayName": "OBSERVACOES",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        512
+      ],
+      "id": "a1c94865-7c1c-496e-bb34-88408635bfd1",
+      "name": "TABELA DE SERVIÇOS",
+      "credentials": {
+        "googleApi": {
+          "id": "a3xg5b2BmOlEJXCs",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        144
+      ],
+      "id": "b01b8da6-e723-4aef-b312-312bb2d46413",
+      "name": "Mark a message as read",
+      "webhookId": "1a82a241-6148-4e41-b315-1422965c77de",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jlwNyQgwpffd6ivq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_6243928935087908718"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        144
+      ],
+      "id": "9a3bc5b6-69aa-4dbe-a410-ad7df2a2f6db",
+      "name": "Add label to message",
+      "webhookId": "c451fa1e-3c3e-459d-9c4d-d74460f5d59c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jlwNyQgwpffd6ivq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "INBOX",
+          "UNREAD"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        144
+      ],
+      "id": "947251c9-f9d1-4370-bb13-f65a513af4ac",
+      "name": "Remove label from message",
+      "webhookId": "4e6975ed-7c20-430a-9c26-3ff2d261af27",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jlwNyQgwpffd6ivq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1bfca22a-7547-4300-b884-0e4d978f3799",
+              "name": "=gmailMessageId",
+              "value": "=={{ $json.messageId || $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        144
+      ],
+      "id": "4b06fbcd-33d0-4412-bf59-ce61351bf8b0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "Confirmação de pedido – {{ extracted pedido }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        512
+      ],
+      "id": "88f0b3b8-134d-4235-a0a6-8041fa594fc4",
+      "name": "Send a message in Gmail",
+      "webhookId": "b8345926-5db4-46ba-9341-39d4b558a0c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jlwNyQgwpffd6ivq",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get availability in a calendar in Google Calendar",
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "mariananogueira.velas@gmail.com",
+          "mode": "id"
+        },
+        "timeMax": "={{ $now.plus(4, 'minute') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        512
+      ],
+      "id": "6d43ac38-9991-4b3c-9692-1d256466d2ba",
+      "name": "Get availability in a calendar in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "2zLvYr5sa5GkHtLw",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo de CHATGPT": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEMORIA": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TABELA DE SERVIÇOS": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark a message as read": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove label from message": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "158286b5-2c2a-4451-b464-f08d347fccf7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f0e5729c8a1c412d17ad68bfe6e3c565172504ee4b40503b2c791ae79eb41506"
+  },
+  "id": "r0l0wLqhsbGQbjkU",
+  "tags": []
+}
